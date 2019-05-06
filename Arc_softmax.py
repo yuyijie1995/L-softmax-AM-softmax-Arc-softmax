@@ -16,7 +16,7 @@ class Arc_Loss(gluon.nn.HybridBlock):
     def hybrid_forward(self, F, x, y,weight):
         x_norm=F.L2Normalization(x,mode='instance')
         W_norm=F.L2Normalization(weight,mode='instance')
-        fc=F.dot(x_norm,W_norm,transpose_b=True)
+        fc=F.dot(x_norm,W_norm,transpose_b=True)*self._scale
         if y is None:
             return fc
         target_logits=F.pick(fc,y)
@@ -24,5 +24,5 @@ class Arc_Loss(gluon.nn.HybridBlock):
         marginal_target_logit=F.cos(theta+self._margin)
         one_hot=F.one_hot(y,depth=self._num_classes,on_value=1.0,off_value=0.0)
         fc_label=fc+F.broadcast_mul(one_hot,F.expand_dims(marginal_target_logit-target_logits,1))#no mask
-        output=fc_label*self._scale
+        output=fc_label
         return output
